@@ -10,7 +10,7 @@ import type { PriceQuote } from '@/types';
 
 export interface PriceProvider {
   /** 数据源标识 */
-  readonly name: 'alpaca' | 'coingecko';
+  readonly name: 'alpaca' | 'coingecko' | 'finnhub';
   /**
    * 批量获取报价。
    * @param symbols 代码列表（大写，例如 ['AAPL', 'TSLA']）
