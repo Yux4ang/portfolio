@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* ============================================================================
+ * 主题变量（Design Tokens）
+ * ============================================================================
+ * Tailwind v4 使用 CSS 原生变量做主题定制。
+ * 想要整体换一套配色/字体/圆角风格？只需要改这一个 @theme 块，
+ * 全站所有用到 bg-brand-500 / text-accent 等 class 的地方会自动联动更新。
+ *
+ * 用法示例：
+ *   background: bg-surface-primary / bg-surface-secondary
+ *   强调色:     bg-brand-500 / text-brand-500
+ *   涨/跌:      text-gain / text-loss
+ *   圆角:       rounded-app-lg
+ * ---------------------------------------------------------------------------
+ */
+@theme {
+  /* ---- 品牌主色（强调色），改这一组即可整体换主题色 ---- */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
+ /* ---- 浅色玻璃拟态背景层级（配合亮色 iOS 风背景） ---- */
+  --color-surface-base: #fdf6f0;
+  --color-surface-primary: rgba(255, 255, 255, 0.45);
+  --color-surface-secondary: rgba(255, 255, 255, 0.3);
+  --color-surface-border: rgba(30, 25, 40, 0.12);
+  --color-surface-hover: rgba(255, 255, 255, 0.6);
+  /* ---- 文本颜色层级 ---- */
+  --color-text-primary: #1e1a28;
+  --color-text-secondary: #4a4658;
+  --color-text-muted: #6b6578;
+
+  /* ---- 语义色：盈利 / 亏损 / 警告 ---- */
+  --color-gain: #34d399;
+  --color-gain-bg: rgba(52, 211, 153, 0.12);
+  --color-loss: #f87171;
+  --color-loss-bg: rgba(248, 113, 113, 0.12);
+  --color-warn: #fbbf24;
+
+  /* ---- 圆角规范：想统一改圆角风格（比如更方/更圆）改这里 ---- */
+  --radius-app-sm: 0.5rem;
+  --radius-app-md: 0.875rem;
+  --radius-app-lg: 1.25rem;
+  --radius-app-xl: 1.75rem;
+
+  /* ---- 字体 ---- */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ============================================================================
+ * 基础全局样式
+ * ============================================================================ */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 65% 55% at 15% 0%, rgba(255, 179, 160, 0.9), transparent 60%),
+    radial-gradient(ellipse 75% 65% at 85% 15%, rgba(255, 214, 150, 0.75), transparent 55%),
+    radial-gradient(ellipse 85% 75% at 90% 90%, rgba(120, 180, 230, 0.85), transparent 60%),
+    radial-gradient(ellipse 75% 65% at 10% 95%, rgba(180, 160, 230, 0.7), transparent 55%),
+    linear-gradient(160deg, #fce8e0 0%, #f5ecdd 40%, #dce8f0 100%);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* 玻璃拟态卡片的通用基类。
+ * 想调整"玻璃感"强弱（模糊程度/透明度/边框），改这里即可全局生效。 */
+.glass-panel {
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-surface-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-app-lg);
+}
+
+.glass-panel-hover {
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.glass-panel-hover:hover {
+  background: var(--color-surface-hover);
+  transform: translateY(-1px);
+}
+
+/* 滚动条美化（可选，纯视觉，不影响功能） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 输入框/下拉框在深色玻璃背景下的通用样式 */
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--radius-app-sm);
+  color: var(--color-text-primary);
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+}
+.input-field:focus {
+  border-color: var(--color-brand-500);
+  background: rgba(255, 255, 255, 0.08);
+}
+.input-field::placeholder {
+  color: var(--color-text-muted);
+}

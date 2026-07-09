@@ -1,0 +1,8 @@
+name = "alpaca-price-proxy"
+main = "worker.ts"
+compatibility_date = "2024-01-01"
+
+# API Key/Secret 不要写在这个文件里！
+# 使用 `wrangler secret put ALPACA_API_KEY` 和
+# `wrangler secret put ALPACA_API_SECRET` 命令行方式设置，
+# 这样密钥只存在 Cloudflare 后台，不会出现在代码仓库里。
