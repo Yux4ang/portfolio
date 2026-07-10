@@ -263,3 +263,37 @@ const openedAt = position.purchasedAt || position.createdAt;
     note: position.note,
   };
 }
+
+/**
+ * 编辑一条已了结记录后，重新计算所有派生字段（已实现盈亏/持仓天数/年化收益率）。
+ * 和 buildClosedPosition 逻辑基本一致，只是输入源从 Position 换成已有的 ClosedPosition。
+ */
+export function recalculateClosedPosition(
+  record: ClosedPosition,
+  updates: { openedAt: string; closedAt: string; exitPrice: number }
+): ClosedPosition {
+  const costValue = record.costPrice * record.quantity;
+  const exitValue = updates.exitPrice * record.quantity;
+  const realizedPnlAmount = exitValue - costValue;
+  const realizedPnlPercent = costValue !== 0 ? (realizedPnlAmount / costValue) * 100 : 0;
+
+  const holdingMs = new Date(updates.closedAt).getTime() - new Date(updates.openedAt).getTime();
+  const holdingDays = Math.max(1, Math.round(holdingMs / (1000 * 60 * 60 * 24)));
+
+  const totalReturnRatio = costValue !== 0 ? exitValue / costValue : 1;
+  const annualizedReturnPercent =
+    totalReturnRatio > 0
+      ? (Math.pow(totalReturnRatio, 365 / holdingDays) - 1) * 100
+      : realizedPnlPercent;
+
+  return {
+    ...record,
+    exitPrice: updates.exitPrice,
+    openedAt: updates.openedAt,
+    closedAt: updates.closedAt,
+    realizedPnlAmount,
+    realizedPnlPercent,
+    holdingDays,
+    annualizedReturnPercent,
+  };
+}
