@@ -43,7 +43,7 @@ export function AssetIcon({ symbol, assetType, size = 36 }: AssetIconProps) {
     );
   }
 
-  return (
+   return (
     <img
       src={logoUrl}
       alt={symbol}
