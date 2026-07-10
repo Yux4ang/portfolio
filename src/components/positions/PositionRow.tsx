@@ -14,9 +14,9 @@ interface PositionRowProps {
   position: EnrichedPosition;
   onEdit: (position: EnrichedPosition) => void;
   onDelete: (position: EnrichedPosition) => void;
+  onClosePosition: (position: EnrichedPosition) => void;
 }
-
-export function PositionRow({ position, onEdit, onDelete }: PositionRowProps) {
+export function PositionRow({ position, onEdit, onDelete, onClosePosition }: PositionRowProps) {
   const pnlColor = getPnlColorClass(position.pnlAmount);
 
   return (
@@ -66,25 +66,33 @@ export function PositionRow({ position, onEdit, onDelete }: PositionRowProps) {
         </div>
       </div>
 
-      {/* 操作按钮 */}
-      <div className="flex gap-1 shrink-0">
-        <button
-          onClick={() => onEdit(position)}
-          className="p-2 rounded-app-sm text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
-          aria-label="编辑"
-          title="编辑"
-        >
-          ✎
-        </button>
-        <button
-          onClick={() => onDelete(position)}
-          className="p-2 rounded-app-sm text-text-secondary hover:text-loss hover:bg-loss/10 transition-colors"
-          aria-label="删除"
-          title="删除"
-        >
-          🗑
-        </button>
-      </div>
-    </div>
+        {/* 操作按钮 */}
+<div className="flex gap-1 shrink-0">
+  <button
+    onClick={() => onClosePosition(position)}
+    className="p-2 rounded-app-sm text-text-secondary hover:text-brand-500 hover:bg-brand-500/10 transition-colors"
+    aria-label="平仓"
+    title="平仓（记录为已了结）"
+  >
+    📦
+  </button>
+  <button
+    onClick={() => onEdit(position)}
+    className="p-2 rounded-app-sm text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
+    aria-label="编辑"
+    title="编辑"
+  >
+    ✏️
+  </button>
+  <button
+    onClick={() => onDelete(position)}
+    className="p-2 rounded-app-sm text-text-secondary hover:text-loss hover:bg-loss/10 transition-colors"
+    aria-label="删除"
+    title="删除"
+  >
+    🗑️
+  </button>
+ </div>
+</div>
   );
 }

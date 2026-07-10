@@ -3,9 +3,9 @@
  * App —— 应用主入口
  * ============================================================================
  * 只负责：
- *   1. 页面级别的 Tab 切换（总览 / 仓位管理 / 仓位聚合）
+ *   1. 页面级别的 Tab 切换（总览 / 仓位管理 / 仓位聚合 / 历史仓位）
  *   2. 调用 usePortfolioData 拿到全部计算好的数据，往下传给各展示组件
- * 不含任何业务计算逻辑，保持"薄"，方便以后加新页面（比如"历史走势"）。
+ * 不含任何业务计算逻辑，保持"薄"，方便以后加新页面。
  */
 import { useState } from 'react';
 import { Header, type PageTab } from '@/components/layout/Header';
@@ -15,6 +15,7 @@ import { AssetAllocationBar } from '@/components/overview/AssetAllocationBar';
 import { ImportExportPanel } from '@/components/overview/ImportExportPanel';
 import { PositionList } from '@/components/positions/PositionList';
 import { PositionAggregateList } from '@/components/positions/PositionAggregateList';
+import { ClosedPositionList } from '@/components/positions/ClosedPositionList';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 
 function App() {
@@ -48,8 +49,10 @@ function App() {
         </div>
       ) : activeTab === 'positions' ? (
         <PositionList positions={enrichedPositions} />
-      ) : (
+      ) : activeTab === 'aggregate' ? (
         <PositionAggregateList positions={aggregatedPositions} />
+      ) : (
+        <ClosedPositionList />
       )}
     </div>
   );

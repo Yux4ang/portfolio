@@ -216,3 +216,49 @@ export function groupBySymbol(positions: EnrichedPosition[]): AggregatedPosition
 
   return result.sort((a, b) => (b.totalMarketValue ?? 0) - (a.totalMarketValue ?? 0));
 }
+
+
+import type { ClosedPosition } from '@/types';
+
+/**
+ * 把一条"正在持有的仓位" + "卖出价格/时间" 转换成一条已了结记录，
+ * 计算实现盈亏、持仓天数、年化收益率。
+ */
+export function buildClosedPosition(
+  position: Position,
+  exitPrice: number,
+  closedAt: string
+): Omit<ClosedPosition, 'id'> {
+  const costValue = position.costPrice * position.quantity;
+  const exitValue = exitPrice * position.quantity;
+  const realizedPnlAmount = exitValue - costValue;
+  const realizedPnlPercent = costValue !== 0 ? (realizedPnlAmount / costValue) * 100 : 0;
+
+  const openedAt = position.createdAt;
+  const holdingMs = new Date(closedAt).getTime() - new Date(openedAt).getTime();
+  // 持仓不足 1 天时按 1 天计算，避免年化换算时除以 0 或产生离谱数字
+  const holdingDays = Math.max(1, Math.round(holdingMs / (1000 * 60 * 60 * 24)));
+
+  // 年化收益率（复利换算）：(1 + 总收益率)^(365/持仓天数) - 1
+  const totalReturnRatio = costValue !== 0 ? exitValue / costValue : 1;
+  const annualizedReturnPercent =
+    totalReturnRatio > 0
+      ? (Math.pow(totalReturnRatio, 365 / holdingDays) - 1) * 100
+      : realizedPnlPercent; // 极端情况（本金亏光）直接退化成总收益率，避免 NaN
+
+  return {
+    symbol: position.symbol,
+    assetType: position.assetType,
+    costPrice: position.costPrice,
+    exitPrice,
+    quantity: position.quantity,
+    platform: position.platform,
+    openedAt,
+    closedAt,
+    realizedPnlAmount,
+    realizedPnlPercent,
+    holdingDays,
+    annualizedReturnPercent,
+    note: position.note,
+  };
+}

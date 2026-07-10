@@ -4,7 +4,7 @@
 import type { PriceFeedStatus } from '@/hooks/usePriceFeed';
 import { formatRelativeTime } from '@/utils/formatters';
 
-export type PageTab = 'overview' | 'positions' | 'aggregate';
+export type PageTab = 'overview' | 'positions' | 'aggregate' | 'closed';
 
 interface HeaderProps {
   activeTab: PageTab;
@@ -18,6 +18,7 @@ const TABS: { key: PageTab; label: string }[] = [
   { key: 'overview', label: '总览' },
   { key: 'positions', label: '仓位管理' },
   { key: 'aggregate', label: '仓位聚合' },
+  { key: 'closed', label: '历史仓位' },
 ];
 
 export function Header({ activeTab, onTabChange, priceStatus, lastUpdatedAt, onRefresh }: HeaderProps) {
@@ -52,7 +53,8 @@ export function Header({ activeTab, onTabChange, priceStatus, lastUpdatedAt, onR
         </span>
        <button
   onClick={onRefresh}
-  disabled={priceStatus === 'loading'}          className="p-2 rounded-app-sm text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors disabled:opacity-40"
+  disabled={priceStatus === 'loading'}
+          className="p-2 rounded-app-sm text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors disabled:opacity-40"
           title="手动刷新价格"
         >
           ⟳

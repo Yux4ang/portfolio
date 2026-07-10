@@ -39,3 +39,36 @@ export function savePositions(positions: Position[]): void {
 export function clearPositions(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
+
+
+import type { ClosedPosition } from '@/types';
+
+const CLOSED_STORAGE_KEY = APP_CONFIG.closedPositionsStorageKey;
+
+/** 从 localStorage 读取全部已了结仓位。读取失败或数据损坏时返回空数组。 */
+export function loadClosedPositions(): ClosedPosition[] {
+  try {
+    const raw = localStorage.getItem(CLOSED_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as ClosedPosition[];
+  } catch (err) {
+    console.error('[storage] 读取已了结仓位数据失败，已重置为空列表:', err);
+    return [];
+  }
+}
+
+/** 将全部已了结仓位写入 localStorage */
+export function saveClosedPositions(closedPositions: ClosedPosition[]): void {
+  try {
+    localStorage.setItem(CLOSED_STORAGE_KEY, JSON.stringify(closedPositions));
+  } catch (err) {
+    console.error('[storage] 写入已了结仓位数据失败:', err);
+  }
+}
+
+/** 清空全部已了结仓位（危险操作） */
+export function clearClosedPositions(): void {
+  localStorage.removeItem(CLOSED_STORAGE_KEY);
+}

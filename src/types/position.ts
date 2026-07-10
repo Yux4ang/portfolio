@@ -79,3 +79,33 @@ export interface EnrichedPosition extends Position {
   /** 价格是否拉取成功 */
   priceStatus: 'ok' | 'loading' | 'error';
 }
+
+/**
+ * 已了结（平仓）的仓位记录 —— "已实现盈亏"的纪念档案。
+ * 和 Position 分开存储，因为语义完全不同：Position 是"现在持有什么"，
+ * ClosedPosition 是"曾经持有过、已经卖出的历史记录"。
+ */
+export interface ClosedPosition {
+  id: string;
+  symbol: string;
+  assetType: AssetType;
+  /** 买入均价 */
+  costPrice: number;
+  /** 卖出价格 */
+  exitPrice: number;
+  quantity: number;
+  platform: string;
+  /** 原仓位的建仓时间（从 Position.createdAt 继承） */
+  openedAt: string;
+  /** 平仓时间 */
+  closedAt: string;
+  /** 已实现盈亏金额 = (exitPrice - costPrice) * quantity */
+  realizedPnlAmount: number;
+  /** 已实现盈亏百分比 */
+  realizedPnlPercent: number;
+  /** 持仓天数 */
+  holdingDays: number;
+  /** 年化收益率（复利换算），持仓不足 1 天按 1 天计算，避免除零 */
+  annualizedReturnPercent: number;
+  note?: string;
+}
