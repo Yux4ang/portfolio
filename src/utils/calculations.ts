@@ -234,7 +234,8 @@ export function buildClosedPosition(
   const realizedPnlAmount = exitValue - costValue;
   const realizedPnlPercent = costValue !== 0 ? (realizedPnlAmount / costValue) * 100 : 0;
 
-  const openedAt = position.createdAt;
+  // 优先用用户手动录入的真实购入日期，没填的话才退回用系统记录的创建时间
+const openedAt = position.purchasedAt || position.createdAt;
   const holdingMs = new Date(closedAt).getTime() - new Date(openedAt).getTime();
   // 持仓不足 1 天时按 1 天计算，避免年化换算时除以 0 或产生离谱数字
   const holdingDays = Math.max(1, Math.round(holdingMs / (1000 * 60 * 60 * 24)));

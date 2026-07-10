@@ -29,6 +29,8 @@ export interface Position {
   quantity: number;
   /** 购入平台，例如 IBKR / Binance / OKX，用户自由输入，支持多平台 */
   platform: string;
+  /** 实际购入日期（用户手动录入，可选）。不填时平仓计算持仓天数会退回用 createdAt。 */
+  purchasedAt?: string;
   /** 记录创建时间（ISO 字符串），用于排序和导出追溯 */
   createdAt: string;
   /** 最近一次编辑时间（ISO 字符串） */

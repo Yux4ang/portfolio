@@ -22,6 +22,7 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
   const [platform, setPlatform] = useState(initialValue?.platform ?? '');
   const [note, setNote] = useState(initialValue?.note ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [purchasedAt, setPurchasedAt] = useState(initialValue?.purchasedAt ?? '');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,13 +51,14 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
     }
 
     onSubmit({
-      symbol: trimmedSymbol,
-      assetType,
-      costPrice: parsedCost,
-      quantity: parsedQty,
-      platform: trimmedPlatform,
-      note: note.trim() || undefined,
-    });
+  symbol: trimmedSymbol,
+  assetType,
+  costPrice: parsedCost,
+  quantity: parsedQty,
+  platform: trimmedPlatform,
+  purchasedAt: purchasedAt || undefined,
+  note: note.trim() || undefined,
+});
   }
 
   return (
@@ -138,6 +140,21 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
       </div>
 
       <div>
+  <label className="block text-sm text-text-secondary mb-1.5">
+    购入日期（可选）
+  </label>
+  <input
+    type="date"
+    className="input-field"
+    value={purchasedAt}
+    onChange={(e) => setPurchasedAt(e.target.value)}
+  />
+  <p className="text-xs text-text-muted mt-1">
+    不填的话，平仓时会用系统记录的建仓时间来计算持仓天数
+  </p>
+</div>
+
+       <div>
         <label className="block text-sm text-text-secondary mb-1.5">备注（可选）</label>
         <input
           type="text"
