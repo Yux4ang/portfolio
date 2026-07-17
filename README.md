@@ -93,3 +93,4 @@ BTC,crypto,45000,0.05,Binance,长期持有
 
 - `assetType` 必须是 `stock` 或 `crypto`
 - `note` 列可留空
+"# portfolio-kimi" 
