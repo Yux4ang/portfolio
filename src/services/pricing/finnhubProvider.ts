@@ -12,8 +12,8 @@ import type { PriceProvider } from './types';
 import type { PriceQuote } from '@/types';
 
 const PROXY_BASE_URL = import.meta.env.VITE_PRICE_PROXY_BASE_URL || '/api/proxy';
-const BATCH_SIZE = 3;
-const BATCH_DELAY_MS = 400;
+const BATCH_SIZE = 2;
+const BATCH_DELAY_MS = 600;
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const result: T[][] = [];
