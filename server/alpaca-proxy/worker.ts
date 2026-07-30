@@ -37,31 +37,52 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === '/finnhub/quote') {
-      const symbol = url.searchParams.get('symbol');
-      if (!symbol) {
-        return jsonResponse({ error: 'missing symbol param' }, 400);
-      }
-      const finnhubUrl = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(
-        symbol
-      )}&token=${env.FINNHUB_API_KEY}`;
-      let finnhubRes: Response;
-      try {
-        finnhubRes = await fetch(finnhubUrl);
-      } catch (err) {
-        return jsonResponse({ error: 'upstream fetch failed', detail: String(err) }, 502);
-      }
-      const rawText = await finnhubRes.text();
-      try {
-        const data = JSON.parse(rawText);
-        return jsonResponse(data, finnhubRes.status);
-      } catch (err) {
-        return jsonResponse(
-          { error: 'upstream returned non-JSON', status: finnhubRes.status, raw: rawText.slice(0, 200) },
-          finnhubRes.status || 502
-        );
-      }
+   if (url.pathname === '/finnhub/quote') {
+  const symbol = url.searchParams.get('symbol');
+  if (!symbol) {
+    return jsonResponse({ error: 'missing symbol param' }, 400);
+  }
+
+  // 用请求 URL 本身当缓存 key，同一个 symbol 的请求会命中同一份缓存
+  const cache = caches.default;
+  const cacheKey = new Request(url.toString(), request);
+  const cachedResponse = await cache.match(cacheKey);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const finnhubUrl = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(
+    symbol
+  )}&token=${env.FINNHUB_API_KEY}`;
+
+  let finnhubRes: Response;
+  try {
+    finnhubRes = await fetch(finnhubUrl);
+  } catch (err) {
+    return jsonResponse({ error: 'upstream fetch failed', detail: String(err) }, 502);
+  }
+
+  const rawText = await finnhubRes.text();
+  try {
+    const data = JSON.parse(rawText);
+    const response = jsonResponse(data, finnhubRes.status);
+
+    // 只缓存成功的响应，缓存 90 秒（比前端 120 秒的自动刷新间隔略短，
+    // 保证不会长时间展示过期太久的价格，同时足够挡住短时间内的重复请求）
+    if (finnhubRes.ok) {
+      const responseToCache = response.clone();
+      responseToCache.headers.set('Cache-Control', 'public, max-age=90');
+      await cache.put(cacheKey, responseToCache);
     }
+
+    return response;
+  } catch (err) {
+    return jsonResponse(
+      { error: 'upstream returned non-JSON', status: finnhubRes.status, raw: rawText.slice(0, 200) },
+      finnhubRes.status || 502
+    );
+  }
+}
 
     // 路由：/icon?domain=nvidia.com
     // 代理 DuckDuckGo 图标服务，解决浏览器直连时的 CORS 拦截问题
