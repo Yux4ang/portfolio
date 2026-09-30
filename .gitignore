@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.dev.vars
+.dev.vars.*
+.wrangler/
+.env
+.env.*
+!.env.example
+portfolio-full-backup*.json
+portfolio-before-restore*.json
 
 # Editor directories and files
 .vscode/*

@@ -60,7 +60,8 @@ export function ImportExportPanel() {
 
   return (
     <GlassCard className="p-5">
-      <h2 className="text-lg font-semibold text-text-primary mb-4">数据导入 / 导出</h2>
+      <h2 className="text-lg font-semibold text-text-primary mb-4">当前持仓导入 / 导出</h2>
+      <p className="text-xs text-text-muted mb-3">此处仅处理当前持仓，不包含已平仓记录、现金和资产快照。保留全部日期请使用上方“完整备份”。</p>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <Button variant="secondary" onClick={handleExportCSV}>

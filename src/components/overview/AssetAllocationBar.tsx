@@ -10,13 +10,15 @@ interface AssetAllocationBarProps {
     stock: { totalMarketValue: number };
     crypto: { totalMarketValue: number };
   };
+  cashValue: number;
 }
 
-export function AssetAllocationBar({ assetTypeSummary }: AssetAllocationBarProps) {
+export function AssetAllocationBar({ assetTypeSummary, cashValue }: AssetAllocationBarProps) {
   const { stock, crypto } = assetTypeSummary;
-  const total = stock.totalMarketValue + crypto.totalMarketValue;
+  const total = stock.totalMarketValue + crypto.totalMarketValue + cashValue;
   const stockPct = total > 0 ? (stock.totalMarketValue / total) * 100 : 0;
   const cryptoPct = total > 0 ? (crypto.totalMarketValue / total) * 100 : 0;
+  const cashPct = total > 0 ? (cashValue / total) * 100 : 0;
 
   return (
     <GlassCard className="p-5">
@@ -25,6 +27,7 @@ export function AssetAllocationBar({ assetTypeSummary }: AssetAllocationBarProps
       <div className="h-3 rounded-full overflow-hidden flex bg-white/5 mb-4">
         <div className="h-full bg-brand-500" style={{ width: `${stockPct}%` }} />
         <div className="h-full bg-gain" style={{ width: `${cryptoPct}%` }} />
+        <div className="h-full bg-warn" style={{ width: `${cashPct}%` }} />
       </div>
 
       <div className="flex gap-6 text-sm">
@@ -32,6 +35,11 @@ export function AssetAllocationBar({ assetTypeSummary }: AssetAllocationBarProps
           <span className="w-2.5 h-2.5 rounded-full bg-brand-500" />
           <span className="text-text-secondary">美股</span>
           <span className="text-text-primary font-medium">{formatCurrency(stock.totalMarketValue)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-warn" />
+          <span className="text-text-secondary">现金</span>
+          <span className="text-text-primary font-medium">{formatCurrency(cashValue)}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-gain" />

@@ -1,5 +1,11 @@
 # Portfolio Dashboard
 
+## Cloudflare 云端保存（新增）
+
+总览页面新增“云端保存 / 完整备份”。支持手动保存和读取全部当前持仓、已平仓记录、现金账户及资产快照，保留日期与记录 ID，并支持恢复原网站控制台导出的完整备份。使用前需部署 Cloudflare Worker + D1，设置私密同步密钥；详见 [部署与迁移指南](server/portfolio-cloud/README.md)。未配置云端时，原本的本地记录方式仍可使用。
+
+请注意：旧有“当前持仓导入 / 导出”仅处理当前持仓。要保留历史仓位和完整日期，请使用新增的“下载完整备份”。云端目前采用手动保存，修改后请点击“保存到云端”。
+
 一个用于手动记录、追踪美股与加密货币持仓的个人投资组合仪表盘。支持实时价格（美股走 Alpaca，加密货币走 CoinGecko）、多平台汇总、CSV/JSON 导入导出，本地数据持久化（localStorage）。
 
 ## 技术栈
@@ -81,7 +87,7 @@ server/alpaca-proxy/     # 独立的 Cloudflare Worker，代理 Alpaca API 请�
 
 ## 数据存储说明
 
-所有仓位数据保存在浏览器的 localStorage 里（key 见 `src/config/app.ts` 的 `storageKey`），**不会上传到任何服务器**。清除浏览器数据或更换设备/浏览器会导致数据丢失，请定期使用"导出 JSON"功能做备份。
+默认数据保存在浏览器的 localStorage 里（key 见 `src/config/app.ts`）。配置云端服务并点击“保存到云端”后，全部记录会保存至你自己的 Cloudflare D1 数据库。未上传的数据在清除浏览器网站数据后无法自动恢复，请定期使用“下载完整备份”，并在修改后手动保存到云端。
 
 ## CSV 导入格式
 

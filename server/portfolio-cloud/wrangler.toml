@@ -1,0 +1,15 @@
+name = "portfolio-cloud"
+main = "worker.ts"
+compatibility_date = "2026-09-30"
+
+[vars]
+# Fill in the exact website origin, without a trailing slash.
+# Separate multiple allowed origins with commas. Local testing must be listed explicitly.
+ALLOWED_ORIGINS = "https://portfolio.shellyu.workers.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-data"
+database_id = "9b1d71f9-a1b1-4bdf-8aa5-39a48f766dd5"
+
+# Store SYNC_TOKEN with `npx wrangler secret put SYNC_TOKEN`, never in this file.

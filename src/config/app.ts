@@ -7,6 +7,8 @@
 export const APP_CONFIG = {
   storageKey: 'portfolio-dashboard:positions:v1',
   closedPositionsStorageKey: 'portfolio-dashboard:closed-positions:v1',
+  cashAccountsStorageKey: 'portfolio-dashboard:cash-accounts:v1',
+  assetSnapshotsStorageKey: 'portfolio-dashboard:asset-snapshots:v1',
   /** 已成功拿到价格的标的，多久视为"过期"需要重新刷新 */
   successRefreshIntervalMs: 5 * 60_000, // 5 分钟
   /** 上次请求失败（比如被限流）的标的，多久后允许重试 */

@@ -7,7 +7,7 @@
  * 只需要重写这一个文件里的三个函数，其他代码（store、hooks）完全不用改，
  * 因为它们只依赖这里导出的接口，不直接碰 window.localStorage。
  */
-import type { Position } from '@/types';
+import type { AssetSnapshot, CashAccount, Position } from '@/types';
 import { APP_CONFIG } from '@/config/app';
 
 const STORAGE_KEY = APP_CONFIG.storageKey;
@@ -72,3 +72,24 @@ export function saveClosedPositions(closedPositions: ClosedPosition[]): void {
 export function clearClosedPositions(): void {
   localStorage.removeItem(CLOSED_STORAGE_KEY);
 }
+
+function loadArray<T>(key: string): T[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) ?? '[]');
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export const loadCashAccounts = (): CashAccount[] =>
+  loadArray<CashAccount>(APP_CONFIG.cashAccountsStorageKey);
+
+export const saveCashAccounts = (accounts: CashAccount[]): void =>
+  localStorage.setItem(APP_CONFIG.cashAccountsStorageKey, JSON.stringify(accounts));
+
+export const loadAssetSnapshots = (): AssetSnapshot[] =>
+  loadArray<AssetSnapshot>(APP_CONFIG.assetSnapshotsStorageKey);
+
+export const saveAssetSnapshots = (snapshots: AssetSnapshot[]): void =>
+  localStorage.setItem(APP_CONFIG.assetSnapshotsStorageKey, JSON.stringify(snapshots));

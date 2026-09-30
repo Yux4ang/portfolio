@@ -52,3 +52,11 @@ export function formatRelativeTime(isoString: string | undefined): string {
   const diffHour = Math.floor(diffMin / 60);
   return `${diffHour}小时前`;
 }
+
+/** 使用浏览器本地时区生成 YYYY-MM-DD，避免 UTC 在凌晨把日期记到前一天。 */
+export function getLocalDateKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}

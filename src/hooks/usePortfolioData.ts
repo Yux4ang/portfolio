@@ -13,6 +13,7 @@
  */
 import { useMemo } from 'react';
 import { usePositionStore } from '@/store/usePositionStore';
+import { useCashStore } from '@/store/useCashStore';
 import { usePriceFeed } from './usePriceFeed';
 import {
   enrichPosition,
@@ -26,6 +27,7 @@ import type { EnrichedPosition } from '@/types';
 
 export function usePortfolioData() {
   const positions = usePositionStore((s) => s.positions);
+  const cashAccounts = useCashStore((s) => s.accounts);
   const { quotes, status, lastUpdatedAt, refresh } = usePriceFeed(positions);
 
   const enrichedPositions: EnrichedPosition[] = useMemo(() => {
@@ -38,7 +40,17 @@ export function usePortfolioData() {
     return computePercentOfTotal(enriched);
   }, [positions, quotes, status]);
 
-  const summary = useMemo(() => computePortfolioSummary(enrichedPositions), [enrichedPositions]);
+  const investmentSummary = useMemo(() => computePortfolioSummary(enrichedPositions), [enrichedPositions]);
+  const cashValue = useMemo(
+    () => cashAccounts.reduce((sum, account) => sum + account.balance, 0),
+    [cashAccounts]
+  );
+  const summary = useMemo(() => ({
+    ...investmentSummary,
+    investmentValue: investmentSummary.totalMarketValue,
+    cashValue,
+    totalAssets: investmentSummary.totalMarketValue + cashValue,
+  }), [investmentSummary, cashValue]);
 
   const platformSummaries = useMemo(
     () => groupByPlatform(enrichedPositions),
@@ -66,6 +78,7 @@ export function usePortfolioData() {
     assetTypeSummary,
     /** 按 symbol 聚合后的仓位（仓位聚合页面用） */
     aggregatedPositions,
+    cashAccounts,
     /** 价格拉取状态 */
     priceStatus: status,
     /** 最近一次价格刷新时间 */

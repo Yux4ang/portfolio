@@ -37,7 +37,7 @@ export function exportToCSV(positions: Position[]): string {
   return Papa.unparse({ fields: [...CSV_COLUMNS], data: rows });
 }
 
-/** 将仓位数组导出为 JSON 字符串（保留全部字段，包括 id/时间戳，适合做完整备份） */
+/** 导出当前持仓 JSON，不包含历史仓位、现金或资产快照。 */
 export function exportToJSON(positions: Position[]): string {
   return JSON.stringify(positions, null, 2);
 }
@@ -124,7 +124,7 @@ export function importFromCSV(csvText: string): ImportResult {
   return { positions, errors };
 }
 
-/** 从 JSON 文本导入仓位（支持完整备份格式，也兼容只含必要字段的简化格式） */
+/** 从当前持仓 JSON 中导入基础字段；完整备份由 portfolioBackup 模块处理。 */
 export function importFromJSON(jsonText: string): ImportResult {
   const errors: string[] = [];
   let raw: unknown;
