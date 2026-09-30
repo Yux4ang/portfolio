@@ -22,6 +22,7 @@ import {
   groupByPlatform,
   groupByAssetType,
   groupBySymbol,
+  groupPositionsByPlatform,
 } from '@/utils/calculations';
 import type { EnrichedPosition } from '@/types';
 
@@ -67,6 +68,11 @@ export function usePortfolioData() {
     [enrichedPositions]
   );
 
+  const positionsByPlatform = useMemo(
+    () => groupPositionsByPlatform(enrichedPositions),
+    [enrichedPositions]
+  );
+
   return {
     /** 每条仓位的完整视图数据（含市值/盈亏/占比） */
     enrichedPositions,
@@ -78,6 +84,8 @@ export function usePortfolioData() {
     assetTypeSummary,
     /** 按 symbol 聚合后的仓位（仓位聚合页面用） */
     aggregatedPositions,
+    /** 按平台反向分组的仓位（仓位聚合页面用） */
+    positionsByPlatform,
     cashAccounts,
     /** 价格拉取状态 */
     priceStatus: status,

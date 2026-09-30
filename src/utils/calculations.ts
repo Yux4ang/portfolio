@@ -158,6 +158,115 @@ export interface AggregatedPosition {
   /** 合并了多少笔原始仓位 */
   lotCount: number;
   priceStatus: 'ok' | 'loading' | 'error';
+  /** 按平台拆分后的明细，用于从 ticker 汇总反查原始账户仓位 */
+  accountBreakdown: AccountPositionBreakdown[];
+}
+
+/**
+ * 单个 ticker 在单个平台下的汇总。
+ * 同一平台可以存在多笔建仓记录，这里会先按成本加权合并。
+ */
+export interface AccountPositionBreakdown {
+  platform: string;
+  symbol: string;
+  assetType: Position['assetType'];
+  quantity: number;
+  averageCost: number;
+  costValue: number;
+  marketValue: number | null;
+  pnlAmount: number | null;
+  pnlPercent: number | null;
+  lotCount: number;
+  priceStatus: 'ok' | 'loading' | 'error';
+}
+
+/** “按平台”视图的平台分组，内含该账户下所有资产。 */
+export interface PlatformPositionGroup {
+  platform: string;
+  holdings: AccountPositionBreakdown[];
+  totalCostValue: number;
+  totalMarketValue: number | null;
+  totalPnlAmount: number | null;
+  totalPnlPercent: number | null;
+  assetCount: number;
+  lotCount: number;
+  priceStatus: 'ok' | 'loading' | 'error';
+}
+
+interface PositionGroupTotals {
+  totalQuantity: number;
+  averageCost: number;
+  totalCostValue: number;
+  totalMarketValue: number | null;
+  totalPnlAmount: number | null;
+  totalPnlPercent: number | null;
+  priceStatus: 'ok' | 'loading' | 'error';
+}
+
+/**
+ * 所有 ticker / 平台视图共用的汇总口径。
+ * 只要分组内有一笔缺少价格，市值及盈亏就保持 null，避免少算。
+ */
+function computePositionGroupTotals(list: EnrichedPosition[]): PositionGroupTotals {
+  const totalQuantity = list.reduce((sum, p) => sum + p.quantity, 0);
+  const totalCostValue = list.reduce((sum, p) => sum + p.costValue, 0);
+  const averageCost = totalQuantity !== 0 ? totalCostValue / totalQuantity : 0;
+  const allPricesKnown = list.every((p) => p.marketValue !== null);
+  const totalMarketValue = allPricesKnown
+    ? list.reduce((sum, p) => sum + (p.marketValue ?? 0), 0)
+    : null;
+  const totalPnlAmount = totalMarketValue !== null ? totalMarketValue - totalCostValue : null;
+  const totalPnlPercent =
+    totalPnlAmount !== null && totalCostValue !== 0
+      ? (totalPnlAmount / totalCostValue) * 100
+      : null;
+  const priceStatus: 'ok' | 'loading' | 'error' = list.some((p) => p.priceStatus === 'loading')
+    ? 'loading'
+    : list.every((p) => p.priceStatus === 'ok')
+      ? 'ok'
+      : 'error';
+
+  return {
+    totalQuantity,
+    averageCost,
+    totalCostValue,
+    totalMarketValue,
+    totalPnlAmount,
+    totalPnlPercent,
+    priceStatus,
+  };
+}
+
+function groupTickerByAccount(
+  symbol: string,
+  list: EnrichedPosition[]
+): AccountPositionBreakdown[] {
+  const platformMap = new Map<string, EnrichedPosition[]>();
+
+  for (const position of list) {
+    const platform = position.platform || '未分类';
+    if (!platformMap.has(platform)) platformMap.set(platform, []);
+    platformMap.get(platform)!.push(position);
+  }
+
+  return Array.from(platformMap.entries())
+    .map(([platform, platformPositions]) => {
+      const totals = computePositionGroupTotals(platformPositions);
+      return {
+        platform,
+        symbol,
+        assetType: platformPositions[0].assetType,
+        quantity: totals.totalQuantity,
+        averageCost: totals.averageCost,
+        costValue: totals.totalCostValue,
+        marketValue: totals.totalMarketValue,
+        pnlAmount: totals.totalPnlAmount,
+        pnlPercent: totals.totalPnlPercent,
+        lotCount: platformPositions.length,
+        priceStatus: totals.priceStatus,
+      };
+    })
+    .sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
 }
 
 export function groupBySymbol(positions: EnrichedPosition[]): AggregatedPosition[] {
@@ -172,45 +281,28 @@ export function groupBySymbol(positions: EnrichedPosition[]): AggregatedPosition
   const totalMarketValueAll = positions.reduce((sum, p) => sum + (p.marketValue ?? 0), 0);
 
   const result: AggregatedPosition[] = Array.from(map.entries()).map(([symbol, list]) => {
-    const totalQuantity = list.reduce((sum, p) => sum + p.quantity, 0);
-    const totalCostValue = list.reduce((sum, p) => sum + p.costValue, 0);
-    const avgCostPrice = totalQuantity !== 0 ? totalCostValue / totalQuantity : 0;
-
-    const allPricesKnown = list.every((p) => p.marketValue !== null);
-    const totalMarketValue = allPricesKnown
-      ? list.reduce((sum, p) => sum + (p.marketValue ?? 0), 0)
-      : null;
-
-    const totalPnlAmount = totalMarketValue !== null ? totalMarketValue - totalCostValue : null;
-    const totalPnlPercent =
-      totalPnlAmount !== null && totalCostValue !== 0
-        ? (totalPnlAmount / totalCostValue) * 100
-        : null;
+    const totals = computePositionGroupTotals(list);
 
     const platforms = Array.from(new Set(list.map((p) => p.platform || '未分类')));
-
-    const priceStatus: 'ok' | 'loading' | 'error' = list.some((p) => p.priceStatus === 'loading')
-      ? 'loading'
-      : list.every((p) => p.priceStatus === 'ok')
-        ? 'ok'
-        : 'error';
+    const accountBreakdown = groupTickerByAccount(symbol, list);
 
     return {
       symbol,
       assetType: list[0].assetType,
-      totalQuantity,
-      avgCostPrice,
-      totalCostValue,
-      totalMarketValue,
-      totalPnlAmount,
-      totalPnlPercent,
+      totalQuantity: totals.totalQuantity,
+      avgCostPrice: totals.averageCost,
+      totalCostValue: totals.totalCostValue,
+      totalMarketValue: totals.totalMarketValue,
+      totalPnlAmount: totals.totalPnlAmount,
+      totalPnlPercent: totals.totalPnlPercent,
       percentOfTotal:
-        totalMarketValueAll !== 0 && totalMarketValue !== null
-          ? (totalMarketValue / totalMarketValueAll) * 100
+        totalMarketValueAll !== 0 && totals.totalMarketValue !== null
+          ? (totals.totalMarketValue / totalMarketValueAll) * 100
           : 0,
       platforms,
       lotCount: list.length,
-      priceStatus,
+      priceStatus: totals.priceStatus,
+      accountBreakdown,
     };
   });
 
@@ -296,4 +388,61 @@ export function recalculateClosedPosition(
     holdingDays,
     annualizedReturnPercent,
   };
+}
+
+/**
+ * 按平台反向组织全部仓位。每个平台内仍按 ticker 聚合，
+ * 因此数量、市值、成本与 ticker 明细弹窗能够双向核对。
+ */
+export function groupPositionsByPlatform(positions: EnrichedPosition[]): PlatformPositionGroup[] {
+  const platformMap = new Map<string, EnrichedPosition[]>();
+
+  for (const position of positions) {
+    const platform = position.platform || '未分类';
+    if (!platformMap.has(platform)) platformMap.set(platform, []);
+    platformMap.get(platform)!.push(position);
+  }
+
+  return Array.from(platformMap.entries())
+    .map(([platform, platformPositions]) => {
+      const symbolMap = new Map<string, EnrichedPosition[]>();
+      for (const position of platformPositions) {
+        const symbol = position.symbol.toUpperCase();
+        if (!symbolMap.has(symbol)) symbolMap.set(symbol, []);
+        symbolMap.get(symbol)!.push(position);
+      }
+
+      const holdings = Array.from(symbolMap.entries())
+        .map(([symbol, symbolPositions]) => {
+          const totals = computePositionGroupTotals(symbolPositions);
+          return {
+            platform,
+            symbol,
+            assetType: symbolPositions[0].assetType,
+            quantity: totals.totalQuantity,
+            averageCost: totals.averageCost,
+            costValue: totals.totalCostValue,
+            marketValue: totals.totalMarketValue,
+            pnlAmount: totals.totalPnlAmount,
+            pnlPercent: totals.totalPnlPercent,
+            lotCount: symbolPositions.length,
+            priceStatus: totals.priceStatus,
+          };
+        })
+        .sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
+
+      const totals = computePositionGroupTotals(platformPositions);
+      return {
+        platform,
+        holdings,
+        totalCostValue: totals.totalCostValue,
+        totalMarketValue: totals.totalMarketValue,
+        totalPnlAmount: totals.totalPnlAmount,
+        totalPnlPercent: totals.totalPnlPercent,
+        assetCount: holdings.length,
+        lotCount: platformPositions.length,
+        priceStatus: totals.priceStatus,
+      };
+    })
+    .sort((a, b) => (b.totalMarketValue ?? 0) - (a.totalMarketValue ?? 0));
 }

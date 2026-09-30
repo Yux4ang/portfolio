@@ -28,6 +28,7 @@ function App() {
   const {
     enrichedPositions,
     aggregatedPositions,
+    positionsByPlatform,
     summary,
     platformSummaries,
     assetTypeSummary,
@@ -70,7 +71,10 @@ function App() {
       ) : activeTab === 'positions' ? (
         <PositionList positions={enrichedPositions} />
       ) : activeTab === 'aggregate' ? (
-        <PositionAggregateList positions={aggregatedPositions} />
+        <PositionAggregateList
+          positions={aggregatedPositions}
+          platformGroups={positionsByPlatform}
+        />
       ) : (
         <ClosedPositionList />
       )}
