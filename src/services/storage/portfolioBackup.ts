@@ -50,6 +50,24 @@ export function parsePortfolioBackup(value: unknown): PortfolioBackup {
       for (const key of ['purchasedAt', 'note']) {
         if (record[key] !== undefined && typeof record[key] !== 'string') throw new Error(`${name} 的 ${key} 无效。`);
       }
+      if (name === 'cashAccounts' && record.balanceHistory !== undefined) {
+        if (!Array.isArray(record.balanceHistory)) throw new Error('现金账户的余额历史无效。');
+        const historyIds = new Set<string>();
+        for (const change of record.balanceHistory) {
+          if (!isObject(change) ||
+              typeof change.id !== 'string' || !change.id ||
+              typeof change.changedAt !== 'string' || !Number.isFinite(Date.parse(change.changedAt)) ||
+              (change.type !== 'initial' && change.type !== 'adjustment') ||
+              !Number.isFinite(change.previousBalance) ||
+              !Number.isFinite(change.newBalance) ||
+              !Number.isFinite(change.delta) ||
+              (change.note !== undefined && typeof change.note !== 'string')) {
+            throw new Error('现金账户包含无效的余额变更记录。');
+          }
+          if (historyIds.has(change.id)) throw new Error('现金账户包含重复的余额记录。');
+          historyIds.add(change.id);
+        }
+      }
       const id = record.id as string;
       if (ids.has(id)) throw new Error(`${name} 包含重复 ID，请先检查备份。`);
       ids.add(id);
@@ -76,7 +94,11 @@ export function parseBackupFile(text: string): PortfolioBackup {
 }
 
 export function backupCounts(data: PortfolioBackup): string {
-  return `持仓 ${data.positions.length} 条、已平仓 ${data.closedPositions.length} 条、现金账户 ${data.cashAccounts.length} 个、资产快照 ${data.assetSnapshots.length} 条`;
+  const cashChangeCount = data.cashAccounts.reduce(
+    (sum, account) => sum + (Array.isArray(account.balanceHistory) ? account.balanceHistory.length : 0),
+    0
+  );
+  return `持仓 ${data.positions.length} 条、已平仓 ${data.closedPositions.length} 条、现金账户 ${data.cashAccounts.length} 个（余额记录 ${cashChangeCount} 条）、资产快照 ${data.assetSnapshots.length} 条`;
 }
 
 export function recordCount(data: PortfolioBackup): number {

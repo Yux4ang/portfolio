@@ -14,7 +14,7 @@ export function CloudBackupPanel() {
   const [token, setToken] = useState('');
   const [revision, setRevision] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('云端备份采用手动保存；修改仓位后，请点击“保存到云端”。');
+  const [message, setMessage] = useState('云端备份采用手动保存；修改仓位或现金余额后，请点击“保存到云端”。');
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function run(action: () => Promise<void> | void) {
@@ -70,7 +70,7 @@ export function CloudBackupPanel() {
   return (
     <GlassCard className="p-5">
       <h2 className="text-lg font-semibold mb-2">云端保存 / 完整备份</h2>
-      <p className="text-xs text-text-muted mb-4">包含当前持仓、已平仓记录、现金账户和资产走势，保留全部日期。换设备后填写同一地址和密钥，再读取云端。密钥仅在本次页面打开期间使用。</p>
+      <p className="text-xs text-text-muted mb-4">包含当前持仓、已平仓记录、现金账户及余额变更、资产走势，保留全部日期。换设备后填写同一地址和密钥，再读取云端。密钥仅在本次页面打开期间使用。</p>
       <div className="grid gap-3 mb-4">
         <label className="text-sm">云端服务地址
           <input className="input-field w-full mt-1" type="url" placeholder="https://portfolio-cloud.你的子域.workers.dev" value={url} disabled={busy} onChange={(event) => { setUrl(event.target.value); setRevision(null); }} />

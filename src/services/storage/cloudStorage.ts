@@ -3,6 +3,7 @@ import { usePositionStore } from '../../store/usePositionStore';
 import { useClosedPositionStore } from '../../store/useClosedPositionStore';
 import { useCashStore } from '../../store/useCashStore';
 import { useAssetHistoryStore } from '../../store/useAssetHistoryStore';
+import { normalizeCashAccounts } from './localStorage';
 
 export interface CloudRecord {
   revision: number;
@@ -21,12 +22,16 @@ export function capturePortfolio(): PortfolioBackup {
 
 export function restorePortfolio(data: PortfolioBackup): void {
   parsePortfolioBackup(data);
+  const normalizedData: PortfolioBackup = {
+    ...data,
+    cashAccounts: normalizeCashAccounts(data.cashAccounts),
+  };
   const previous = Object.fromEntries(Object.values(DATA_KEYS).map((key) => [key, localStorage.getItem(key)]));
   // A persistent recovery copy must succeed before replacing any of the four lists.
   localStorage.setItem('portfolio-dashboard:before-restore:v1', JSON.stringify(previous));
   try {
     for (const [name, key] of Object.entries(DATA_KEYS)) {
-      localStorage.setItem(key, JSON.stringify(data[name as keyof typeof DATA_KEYS]));
+      localStorage.setItem(key, JSON.stringify(normalizedData[name as keyof typeof DATA_KEYS]));
     }
   } catch (error) {
     for (const [key, value] of Object.entries(previous)) {
@@ -35,10 +40,10 @@ export function restorePortfolio(data: PortfolioBackup): void {
     }
     throw error;
   }
-  usePositionStore.setState({ positions: data.positions });
-  useClosedPositionStore.setState({ closedPositions: data.closedPositions });
-  useCashStore.setState({ accounts: data.cashAccounts });
-  useAssetHistoryStore.setState({ snapshots: [...data.assetSnapshots].sort((a, b) => a.date.localeCompare(b.date)) });
+  usePositionStore.setState({ positions: normalizedData.positions });
+  useClosedPositionStore.setState({ closedPositions: normalizedData.closedPositions });
+  useCashStore.setState({ accounts: normalizedData.cashAccounts });
+  useAssetHistoryStore.setState({ snapshots: [...normalizedData.assetSnapshots].sort((a, b) => a.date.localeCompare(b.date)) });
 }
 
 export function normalizeCloudUrl(value: string): string {

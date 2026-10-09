@@ -82,8 +82,35 @@ function loadArray<T>(key: string): T[] {
   }
 }
 
-export const loadCashAccounts = (): CashAccount[] =>
-  loadArray<CashAccount>(APP_CONFIG.cashAccountsStorageKey);
+export function loadCashAccounts(): CashAccount[] {
+  const stored = loadArray<CashAccount>(APP_CONFIG.cashAccountsStorageKey);
+  const needsMigration = stored.some(
+    (account) => !Array.isArray(account.balanceHistory) || account.balanceHistory.length === 0
+  );
+  const normalized = normalizeCashAccounts(stored);
+  if (needsMigration) saveCashAccounts(normalized);
+  return normalized;
+}
+
+/** 为旧版现金账户补上可追溯的初始余额，保持旧本地数据/备份可直接使用。 */
+export function normalizeCashAccounts(accounts: CashAccount[]): CashAccount[] {
+  return accounts.map((account) => {
+    if (Array.isArray(account.balanceHistory) && account.balanceHistory.length > 0) return account;
+    const changedAt = account.updatedAt || account.createdAt || new Date().toISOString();
+    return {
+      ...account,
+      balanceHistory: [{
+        id: `initial-${account.id}`,
+        previousBalance: 0,
+        newBalance: account.balance,
+        delta: account.balance,
+        changedAt,
+        type: 'initial',
+        note: '从旧版现金账户迁移',
+      }],
+    };
+  });
+}
 
 export const saveCashAccounts = (accounts: CashAccount[]): void =>
   localStorage.setItem(APP_CONFIG.cashAccountsStorageKey, JSON.stringify(accounts));
