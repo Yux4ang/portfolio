@@ -7,10 +7,13 @@ import { useState, type FormEvent } from 'react';
 import type { PositionInput, AssetType, Position } from '@/types';
 import { SUGGESTED_PLATFORMS } from '@/config/platforms';
 import { Button } from '@/components/common/Button';
+import { useCashStore } from '@/store/useCashStore';
+import { getPlatformCashAccounts, purchaseBalance } from '@/services/storage/positionPurchase';
+import { formatCurrency } from '@/utils/formatters';
 
 interface PositionFormProps {
   initialValue?: Position;
-  onSubmit: (input: PositionInput) => void;
+  onSubmit: (input: PositionInput, cashAccountId?: string, actualBalance?: number) => void;
   onCancel: () => void;
 }
 
@@ -23,6 +26,23 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
   const [note, setNote] = useState(initialValue?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [purchasedAt, setPurchasedAt] = useState(initialValue?.purchasedAt ?? '');
+  const accounts = useCashStore(s => s.accounts);
+  const [deductCash, setDeductCash] = useState(true);
+  const [cashAccountId, setCashAccountId] = useState('');
+  const [actualBalance, setActualBalance] = useState('');
+  const balanceOverride = actualBalance.trim() === '' ? undefined : Number(actualBalance);
+  const matchingAccounts = getPlatformCashAccounts(accounts, platform);
+  const selectedAccountId = cashAccountId || (matchingAccounts.length === 1 ? matchingAccounts[0].id : '');
+  const selectedAccount = matchingAccounts.find(account => account.id === selectedAccountId);
+  const shouldDeductCash = !initialValue && deductCash && matchingAccounts.length > 0;
+  const purchaseAmount = costPrice.trim() && quantity.trim() && Number(costPrice) >= 0 && Number(quantity) > 0
+    ? Number(costPrice) * Number(quantity) : NaN;
+  let remainingBalance: number | null = null;
+  let balanceError: string | null = null;
+  if (shouldDeductCash && selectedAccount && Number.isFinite(purchaseAmount)) {
+    try { remainingBalance = purchaseBalance(selectedAccount.balance, purchaseAmount, balanceOverride); }
+    catch (error) { balanceError = error instanceof Error ? error.message : '无法计算现金余额'; }
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -37,11 +57,11 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
       setError('请输入代码（Symbol）');
       return;
     }
-    if (Number.isNaN(parsedCost) || parsedCost < 0) {
+    if (!Number.isFinite(parsedCost) || parsedCost < 0) {
       setError('购入价格必须是有效的非负数');
       return;
     }
-    if (Number.isNaN(parsedQty) || parsedQty <= 0) {
+    if (!Number.isFinite(parsedQty) || parsedQty <= 0) {
       setError('购入数量必须是大于 0 的数字');
       return;
     }
@@ -50,15 +70,25 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
       return;
     }
 
-    onSubmit({
-  symbol: trimmedSymbol,
-  assetType,
-  costPrice: parsedCost,
-  quantity: parsedQty,
-  platform: trimmedPlatform,
-  purchasedAt: purchasedAt || undefined,
-  note: note.trim() || undefined,
-});
+    if (shouldDeductCash && !selectedAccount) {
+      setError('请选择当前平台的扣款现金账户');
+      return;
+    }
+    if (balanceError) { setError(balanceError); return; }
+
+    try {
+      onSubmit({
+        symbol: trimmedSymbol,
+        assetType,
+        costPrice: parsedCost,
+        quantity: parsedQty,
+        platform: trimmedPlatform,
+        purchasedAt: purchasedAt || undefined,
+        note: note.trim() || undefined,
+      }, shouldDeductCash ? selectedAccountId : undefined, shouldDeductCash ? balanceOverride : undefined);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '保存失败，请重试。');
+    }
   }
 
   return (
@@ -129,15 +159,49 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
           className="input-field"
           placeholder="例如 IBKR / Binance"
           value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
+          onChange={(e) => { setPlatform(e.target.value); setCashAccountId(''); setActualBalance(''); setError(null); }}
           list="platform-suggestions"
         />
         <datalist id="platform-suggestions">
-          {SUGGESTED_PLATFORMS.map((p) => (
+          {[...new Set([...SUGGESTED_PLATFORMS, ...accounts.map(account => account.platform)])].map((p) => (
             <option key={p} value={p} />
           ))}
         </datalist>
       </div>
+
+      {!initialValue && (
+        <section className="rounded-app-md border border-surface-border bg-surface-secondary p-4 space-y-3" aria-label="购入现金扣款">
+          <label className="flex items-center gap-3 text-sm font-medium cursor-pointer">
+            <input type="checkbox" className="h-4 w-4 accent-brand-500" checked={deductCash && matchingAccounts.length > 0}
+              disabled={matchingAccounts.length === 0} onChange={event => { setDeductCash(event.target.checked); setError(null); }} />
+            从同平台现金账户扣款
+          </label>
+          {matchingAccounts.length === 0 ? (
+            <p className="text-xs text-text-muted">{platform.trim() ? '此平台还没有现金账户。可先在总览添加；本次将仅录入仓位。' : '填写购入平台后，将匹配该平台的现金账户。'}</p>
+          ) : shouldDeductCash ? (
+            <>
+              <label className="block text-xs text-text-secondary" htmlFor="purchase-cash-account">扣款账户</label>
+              <select id="purchase-cash-account" className="input-field" value={selectedAccountId}
+                onChange={event => { setCashAccountId(event.target.value); setActualBalance(''); setError(null); }}>
+                <option value="" disabled>请选择现金账户</option>
+                {matchingAccounts.map(account => <option key={account.id} value={account.id}>{account.name} · {formatCurrency(account.balance)}</option>)}
+              </select>
+              <div className="flex justify-between gap-3 text-sm"><span className="text-text-secondary">购入金额（不含手续费）</span><span className="font-medium tabular-nums">{Number.isFinite(purchaseAmount) ? formatCurrency(purchaseAmount) : '—'}</span></div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1.5" htmlFor="purchase-actual-balance">购买后实际余额 (USD，可选)</label>
+                <input id="purchase-actual-balance" type="number" min="0" step="any" className="input-field" value={actualBalance}
+                  placeholder={selectedAccount && Number.isFinite(purchaseAmount) && selectedAccount.balance >= purchaseAmount ? `默认 ${formatCurrency(selectedAccount.balance - purchaseAmount)}` : '填写平台显示的真实余额'}
+                  onChange={event => { setActualBalance(event.target.value); setError(null); }} />
+                <p className="text-xs text-text-muted mt-2">留空按购入金额自动扣款；填写后以实际余额为准，可计入手续费等差额。</p>
+              </div>
+              {selectedAccount && <div className="flex justify-between gap-3 text-sm"><span className="text-text-secondary">账户余额</span><span className="tabular-nums">{formatCurrency(selectedAccount.balance)} → {remainingBalance !== null ? formatCurrency(remainingBalance) : '—'}</span></div>}
+              {selectedAccount && remainingBalance !== null && balanceOverride !== undefined && <div className="flex justify-between gap-3 text-sm"><span className="text-text-secondary">实际现金变动</span><span className="font-medium tabular-nums">{remainingBalance > selectedAccount.balance ? '+' : ''}{formatCurrency(remainingBalance - selectedAccount.balance)}</span></div>}
+              {balanceError && <p role="status" className="text-xs text-loss">{balanceError}</p>}
+              <p className="text-xs text-text-muted">保存时同步记录现金余额变更及修正备注。</p>
+            </>
+          ) : <p className="text-xs text-text-muted">本次仅录入仓位，现金余额保持不变。</p>}
+        </section>
+      )}
 
       <div>
   <label className="block text-sm text-text-secondary mb-1.5">
@@ -165,7 +229,7 @@ export function PositionForm({ initialValue, onSubmit, onCancel }: PositionFormP
         />
       </div>
 
-      {error && <p className="text-sm text-loss">{error}</p>}
+      {error && <p role="alert" className="text-sm text-loss">{error}</p>}
 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>

@@ -20,7 +20,7 @@ export function PositionRow({ position, onEdit, onDelete, onClosePosition }: Pos
   const pnlColor = getPnlColorClass(position.pnlAmount);
 
   return (
-    <div className="glass-panel glass-panel-hover p-4 flex items-center gap-4">
+    <div className="position-row glass-panel glass-panel-hover p-4 flex items-center gap-4">
       {/* Symbol + Logo */}
       <AssetIcon symbol={position.symbol} assetType={position.assetType} size={40} />
 
@@ -67,14 +67,14 @@ export function PositionRow({ position, onEdit, onDelete, onClosePosition }: Pos
       </div>
 
         {/* 操作按钮 */}
-<div className="flex gap-1 shrink-0">
+<div className="position-actions flex gap-1 shrink-0">
   <button
     onClick={() => onClosePosition(position)}
     className="p-2 rounded-app-sm text-text-secondary hover:text-brand-500 hover:bg-brand-500/10 transition-colors"
     aria-label="平仓"
     title="平仓（记录为已了结）"
   >
-    📦
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 8h16v12H4zM3 4h18v4H3zM9 12h6" strokeLinejoin="round" /></svg>
   </button>
   <button
     onClick={() => onEdit(position)}
@@ -82,7 +82,7 @@ export function PositionRow({ position, onEdit, onDelete, onClosePosition }: Pos
     aria-label="编辑"
     title="编辑"
   >
-    ✏️
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z" strokeLinejoin="round" /></svg>
   </button>
   <button
     onClick={() => onDelete(position)}
@@ -90,7 +90,7 @@ export function PositionRow({ position, onEdit, onDelete, onClosePosition }: Pos
     aria-label="删除"
     title="删除"
   >
-    🗑️
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" strokeLinecap="round" strokeLinejoin="round" /></svg>
   </button>
  </div>
 </div>

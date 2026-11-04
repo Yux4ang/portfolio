@@ -10,6 +10,7 @@ import { Button } from '@/components/common/Button';
 import { usePositionStore } from '@/store/usePositionStore';
 import { useClosedPositionStore } from '@/store/useClosedPositionStore';
 import { buildClosedPosition } from '@/utils/calculations';
+import { addPositionWithCash } from '@/services/storage/positionPurchase';
 
 interface PositionListProps {
   positions: EnrichedPosition[];
@@ -23,7 +24,6 @@ export function PositionList({ positions, title = '全部仓位' }: PositionList
   const [closeTarget, setCloseTarget] = useState<EnrichedPosition | null>(null);
   const [exitPriceInput, setExitPriceInput] = useState('');
 
-  const addPosition = usePositionStore((s) => s.addPosition);
   const updatePosition = usePositionStore((s) => s.updatePosition);
   const deletePosition = usePositionStore((s) => s.deletePosition);
   const addClosedPosition = useClosedPositionStore((s) => s.addClosedPosition);
@@ -40,11 +40,11 @@ export function PositionList({ positions, title = '全部仓位' }: PositionList
     setEditingPosition(position);
     setFormOpen(true);
   }
-  function handleSubmit(input: PositionInput) {
+  function handleSubmit(input: PositionInput, cashAccountId?: string, actualBalance?: number) {
     if (editingPosition) {
       updatePosition(editingPosition.id, input);
     } else {
-      addPosition(input);
+      addPositionWithCash(input, cashAccountId, actualBalance);
     }
     setFormOpen(false);
   }

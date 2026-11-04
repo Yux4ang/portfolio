@@ -149,9 +149,9 @@ export function CashAccountsPanel() {
       </div>
 
       <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-4 border-t border-white/15">
-        <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} placeholder="账户名称" />
-        <input className="input-field" value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="银行 / 券商" />
-        <input className="input-field" type="number" min="0" step="any" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="余额 (USD)" />
+        <input className="input-field" aria-label="账户名称" value={name} onChange={(e) => setName(e.target.value)} placeholder="账户名称" />
+        <input className="input-field" aria-label="银行或券商" value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="银行 / 券商" />
+        <input className="input-field" aria-label="现金余额 (USD)" type="number" min="0" step="any" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="余额 (USD)" />
         <Button type="submit">添加现金账户</Button>
       </form>
 

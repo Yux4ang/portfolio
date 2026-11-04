@@ -69,7 +69,7 @@ export function ClosedPositionList() {
         {closedPositions.map((p) => {
           const pnlColor = getPnlColorClass(p.realizedPnlAmount);
           return (
-            <div key={p.id} className="glass-panel glass-panel-hover p-4 flex items-center gap-4">
+            <div key={p.id} className="position-row glass-panel glass-panel-hover p-4 flex items-center gap-4">
               <AssetIcon symbol={p.symbol} assetType={p.assetType} size={40} />
 
               <div className="min-w-0 flex-1 grid grid-cols-2 md:grid-cols-5 gap-3 items-center">
@@ -109,14 +109,14 @@ export function ClosedPositionList() {
                 </div>
               </div>
 
-              <div className="flex gap-1 shrink-0">
+              <div className="position-actions flex gap-1 shrink-0">
                 <button
                   onClick={() => handleOpenEdit(p)}
                   className="p-2 rounded-app-sm text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
                   aria-label="编辑"
                   title="编辑这条历史记录"
                 >
-                  ✏️
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z" strokeLinejoin="round" /></svg>
                 </button>
                 <button
                   onClick={() => setDeleteTarget(p)}
@@ -124,7 +124,7 @@ export function ClosedPositionList() {
                   aria-label="删除记录"
                   title="删除这条历史记录"
                 >
-                  🗑️
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </div>
             </div>

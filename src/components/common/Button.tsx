@@ -12,16 +12,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/20',
-  secondary: 'bg-white/10 hover:bg-white/15 text-text-primary border border-surface-border',
-  ghost: 'bg-transparent hover:bg-white/5 text-text-secondary',
+  primary: 'bg-brand-500 hover:bg-brand-600 text-white',
+  secondary: 'bg-surface-secondary hover:bg-brand-50 text-brand-600 border border-surface-border',
+  ghost: 'bg-transparent hover:bg-surface-secondary text-text-secondary',
   danger: 'bg-loss/10 hover:bg-loss/20 text-loss border border-loss/30',
 };
 
 export function Button({ children, variant = 'primary', className = '', ...rest }: ButtonProps) {
   return (
     <button
-      className={`px-4 py-2 rounded-app-sm font-medium text-sm transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${className}`}
+      className={`ui-button ${VARIANT_CLASSES[variant]} ${className}`}
       {...rest}
     >
       {children}

@@ -82,13 +82,9 @@ function AggregateCard({
     <button
       type="button"
       onClick={() => onOpen(p)}
-      className="glass-panel-hover p-4 flex flex-col gap-3 border text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className="glass-panel glass-panel-hover p-5 flex flex-col gap-4 border text-left w-full focus-visible:ring-2 focus-visible:ring-brand-500"
       style={{
-        borderRadius: '28px',
-        background: `linear-gradient(135deg, rgba(${tintRgb}, 0.28), rgba(${tintRgb}, 0.06))`,
-        borderColor: `rgba(${tintRgb}, 0.25)`,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: `linear-gradient(145deg, #fff 35%, rgba(${tintRgb}, 0.07))`,
       }}
       aria-label={`查看 ${p.symbol} 的账户明细`}
     >
