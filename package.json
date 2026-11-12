@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "test:cloud": "node scripts/test-cloud.mjs",
     "test:purchase": "node --test scripts/test-position-purchase.mjs",
+    "test:positions": "node --test scripts/test-position-view.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

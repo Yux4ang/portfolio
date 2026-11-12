@@ -1,7 +1,7 @@
 /**
  * 仓位列表容器：负责渲染仓位行列表、空状态提示、以及新增/编辑/平仓弹窗的调度。
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EnrichedPosition, PositionInput, Position } from '@/types';
 import { PositionRow } from './PositionRow';
 import { PositionForm } from './PositionForm';
@@ -11,6 +11,7 @@ import { usePositionStore } from '@/store/usePositionStore';
 import { useClosedPositionStore } from '@/store/useClosedPositionStore';
 import { buildClosedPosition } from '@/utils/calculations';
 import { addPositionWithCash } from '@/services/storage/positionPurchase';
+import { loadPositionView, savePositionView, sortPositions, type PositionSort, type PositionColumns } from '@/utils/positionView';
 
 interface PositionListProps {
   positions: EnrichedPosition[];
@@ -23,14 +24,14 @@ export function PositionList({ positions, title = '全部仓位' }: PositionList
   const [deleteTarget, setDeleteTarget] = useState<EnrichedPosition | null>(null);
   const [closeTarget, setCloseTarget] = useState<EnrichedPosition | null>(null);
   const [exitPriceInput, setExitPriceInput] = useState('');
+  const [view, setView] = useState(loadPositionView);
+  useEffect(() => { savePositionView(view); }, [view]);
 
   const updatePosition = usePositionStore((s) => s.updatePosition);
   const deletePosition = usePositionStore((s) => s.deletePosition);
   const addClosedPosition = useClosedPositionStore((s) => s.addClosedPosition);
 
-  const sortedPositions = [...positions].sort(
-    (a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0)
-  );
+  const sortedPositions = sortPositions(positions, view.sort);
 
   function handleOpenAdd() {
     setEditingPosition(undefined);
@@ -76,23 +77,46 @@ export function PositionList({ positions, title = '全部仓位' }: PositionList
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <h2 className="text-lg font-semibold text-text-primary">{title} <span className="text-sm text-text-muted font-normal ml-2">{positions.length} 个仓位</span></h2>
         <Button variant="primary" onClick={handleOpenAdd}>
           + 新增仓位
         </Button>
       </div>
+
+      <div className="positions-toolbar">
+        <label className="positions-sort-label" htmlFor="position-sort">排序
+          <select id="position-sort" aria-label="排序" className="input-field" value={view.sort}
+            onChange={event => setView(current => ({ ...current, sort: event.target.value as PositionSort }))}>
+            <option value="purchased-newest">购买时间：从新到旧</option>
+            <option value="purchased-oldest">购买时间：从旧到新</option>
+            <option value="market-value">市值：从高到低</option>
+          </select>
+        </label>
+        <div className="positions-density" role="group" aria-label="每行仓位数量">
+          <span className="text-xs text-text-muted">每行</span>
+          <div className="positions-density-options">
+            {([1, 2, 3] as PositionColumns[]).map(columns => (
+              <button key={columns} type="button" aria-label={`每行 ${columns} 个仓位`} aria-pressed={view.columns === columns}
+                onClick={() => setView(current => ({ ...current, columns }))}>{columns}</button>
+            ))}
+          </div>
+          <span className="text-xs text-text-muted">个仓位</span>
+        </div>
+      </div>
+      <p className="text-xs text-text-muted mb-4">未填写购买日期时按建仓时间排序；窄屏自动减少每行数量。</p>
 
       {sortedPositions.length === 0 ? (
         <div className="glass-panel p-10 text-center text-text-secondary">
           还没有任何仓位记录，点击右上角「+ 新增仓位」开始记录你的第一笔持仓吧。
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className={`positions-grid positions-grid-${view.columns}`}>
           {sortedPositions.map((p) => (
             <PositionRow
               key={p.id}
               position={p}
+              compact={view.columns > 1}
               onEdit={handleOpenEdit}
               onDelete={setDeleteTarget}
               onClosePosition={handleOpenClose}
